@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Patrik �kerfeldt
+ * Copyright (C) 2011 Patrik Akerfeldt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public class CircleFlowIndicator extends View implements FlowIndicator,
 		int inactiveColor = a.getColor(
 				R.styleable.CircleFlowIndicator_inactiveColor,
 				inactiveDefaultColor);
-
+		
 		// Retrieve the radius
 		radius = a.getDimension(R.styleable.CircleFlowIndicator_radius, 4.0f);
 		
@@ -155,21 +155,31 @@ public class CircleFlowIndicator extends View implements FlowIndicator,
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		int count = 3;
-		if (viewFlow != null) {
+		if (viewFlow != null && viewFlow.getAdapter() != null) {
 			count = viewFlow.getViewsCount();
 		}
 		
 		float circleSeparation = 2*radius+radius;
 		//this is the amount the first circle should be offset to make the entire thing centered
-		float centeringOffset = 0;
+		
+		float centeringOffset = getCenteringOffset(count);
 		
 		int leftPadding = getPaddingLeft();
+		
+		// Draw circles
+		drawCircles(canvas, count, radius, circleSeparation, centeringOffset,
+				leftPadding, flowWidth, currentScroll, mPaintInactive, mPaintActive);
+	}
+	
+	protected void drawCircles(Canvas canvas, int count, float radius, float circleSeparation,
+			float centeringOffset, int leftPadding,  
+			int flowWidth, int currentScroll, Paint paintInactive, Paint paintActive) {
 		
 		// Draw stroked circles
 		for (int iLoop = 0; iLoop < count; iLoop++) {
 			canvas.drawCircle(leftPadding + radius
 					+ (iLoop * circleSeparation) + centeringOffset,
-					getPaddingTop() + radius, radius, mPaintInactive);
+					getPaddingTop() + radius, radius, paintInactive);
 		}
 		float cx = 0;
 		if (flowWidth != 0) {
@@ -178,7 +188,18 @@ public class CircleFlowIndicator extends View implements FlowIndicator,
 		}
 		// The flow width has been upadated yet. Draw the default position
 		canvas.drawCircle(leftPadding + radius + cx+centeringOffset, getPaddingTop()
-				+ radius, radius, mPaintActive);
+				+ radius, radius, paintActive);
+	}
+
+	protected float getCenteringOffset(int count) {
+		float centeringOffset;
+		if (mCentered) {
+            centeringOffset = getWidth() - 3*radius*count;
+            centeringOffset = Math.max(0, centeringOffset/2);
+        } else {
+            centeringOffset = getPaddingLeft();
+        }
+		return centeringOffset;
 	}
 
 	/*
@@ -189,7 +210,7 @@ public class CircleFlowIndicator extends View implements FlowIndicator,
 	 * .view.View, int)
 	 */
 	@Override
-	public void onSwitched(View view, int position) {
+	public void onSwitched(View view, int position, int direction) {
 	}
 
 	/*
@@ -252,7 +273,7 @@ public class CircleFlowIndicator extends View implements FlowIndicator,
 		// Calculate the width according the views count
 		else {
 			int count = 3;
-			if (viewFlow != null) {
+			if (viewFlow != null && viewFlow.getAdapter() != null) {
 				count = viewFlow.getViewsCount();
 			}
 			result = (int) (getPaddingLeft() + getPaddingRight()

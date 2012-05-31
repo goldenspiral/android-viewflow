@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Patrik Åkerfeldt
+ * Copyright (C) 2011 Patrik Akerfeldt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -346,7 +346,7 @@ public class TitleFlowIndicator extends TextView implements FlowIndicator {
 	 * .view.View, int)
 	 */
 	@Override
-	public void onSwitched(View view, int position) {
+	public void onSwitched(View view, int position, int direction) {
 		currentPosition = position;
 		invalidate();
 	}
