@@ -71,6 +71,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 	private boolean mFirstLayout = true;
 	private ViewSwitchListener mViewSwitchListener;
 	private Adapter mAdapter;
+    private boolean indeterminate = false;
 	private int mLastScrollDirection;
 	private AdapterDataSetObserver mDataSetObserver;
 	private FlowIndicator mIndicator;
@@ -517,8 +518,9 @@ public class ViewFlow extends AdapterView<Adapter> {
 		}
 
 		mAdapter = adapter;
+        indeterminate = IndeterminateAdapter.class.isAssignableFrom(mAdapter.getClass());
 
-		if (mAdapter != null) {
+        if (mAdapter != null) {
 			mDataSetObserver = new AdapterDataSetObserver();
 			mAdapter.registerDataSetObserver(mDataSetObserver);
 			mNumberOfViewTypes = mAdapter.getViewTypeCount();
@@ -564,8 +566,8 @@ public class ViewFlow extends AdapterView<Adapter> {
 			return;
 		
 		position = Math.max(position, 0);
-        // this assumes all items are statically preloaded into the adapter
-//		position =  Math.min(position, mAdapter.getCount()-1);
+        if(!indeterminate)
+    		position =  Math.min(position, mAdapter.getCount()-1);
 
 		ArrayList<View> recycleViews = new ArrayList<View>();
 		View recycleView;
@@ -582,12 +584,21 @@ public class ViewFlow extends AdapterView<Adapter> {
 		for(int offset = 1; mSideBuffer - offset >= 0; offset++) {
 			int leftIndex = position - offset;
 			int rightIndex = position + offset;
-//			if(leftIndex >= 0)
-				mLoadedViews.addFirst(makeAndAddView(leftIndex, false));//,
-//						(recycleViews.isEmpty() ? null : recycleViews.remove(0))));
-//			if(rightIndex < mAdapter.getCount())
-				mLoadedViews.addLast(makeAndAddView(rightIndex, true));//,
-//						(recycleViews.isEmpty() ? null : recycleViews.remove(0))));
+            if(indeterminate)
+            {
+                if(leftIndex > ((IndeterminateAdapter)mAdapter).getLeftMostIndex())
+                    mLoadedViews.addFirst(makeAndAddView(leftIndex, false));
+
+                if(rightIndex < ((IndeterminateAdapter)mAdapter).getRightMostIndex())
+                    mLoadedViews.addLast(makeAndAddView(rightIndex, true));
+            }else{
+                if(leftIndex >= 0)
+                    mLoadedViews.addFirst(makeAndAddView(leftIndex, false));//,
+    //						(recycleViews.isEmpty() ? null : recycleViews.remove(0))));
+                if(rightIndex < mAdapter.getCount())
+                    mLoadedViews.addLast(makeAndAddView(rightIndex, true));//,
+    //						(recycleViews.isEmpty() ? null : recycleViews.remove(0))));
+            }
 		}
 
 		mCurrentBufferIndex = mLoadedViews.indexOf(currentView);
