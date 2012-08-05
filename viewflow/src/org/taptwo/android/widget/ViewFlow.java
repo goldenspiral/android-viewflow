@@ -564,7 +564,8 @@ public class ViewFlow extends AdapterView<Adapter> {
 			return;
 		
 		position = Math.max(position, 0);
-		position =  Math.min(position, mAdapter.getCount()-1);
+        // this assumes all items are statically preloaded into the adapter
+//		position =  Math.min(position, mAdapter.getCount()-1);
 
 		ArrayList<View> recycleViews = new ArrayList<View>();
 		View recycleView;
@@ -581,10 +582,10 @@ public class ViewFlow extends AdapterView<Adapter> {
 		for(int offset = 1; mSideBuffer - offset >= 0; offset++) {
 			int leftIndex = position - offset;
 			int rightIndex = position + offset;
-			if(leftIndex >= 0)
+//			if(leftIndex >= 0)
 				mLoadedViews.addFirst(makeAndAddView(leftIndex, false));//,
 //						(recycleViews.isEmpty() ? null : recycleViews.remove(0))));
-			if(rightIndex < mAdapter.getCount())
+//			if(rightIndex < mAdapter.getCount())
 				mLoadedViews.addLast(makeAndAddView(rightIndex, true));//,
 //						(recycleViews.isEmpty() ? null : recycleViews.remove(0))));
 		}
