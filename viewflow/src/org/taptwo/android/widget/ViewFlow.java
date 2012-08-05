@@ -788,6 +788,9 @@ public class ViewFlow extends AdapterView<Adapter> {
 
 		@Override
 		public void onChanged() {
+            if(indeterminate)
+                return;
+
 //			View v = getChildAt(mCurrentBufferIndex);
 //			if (v != null) {
 //				for (int index = 0; index < mAdapter.getCount(); index++) {
