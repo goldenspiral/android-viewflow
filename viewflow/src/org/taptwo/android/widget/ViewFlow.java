@@ -421,8 +421,8 @@ public class ViewFlow extends AdapterView<Adapter> {
 			 * perceived one. Therefore, we need to calculate the perceived
 			 * horizontal scroll origin here, since we use a view buffer.
 			 */
-			int hPerceived = h + (mCurrentAdapterIndex - mCurrentBufferIndex)
-					* getWidth();
+            int fromOrigin = indeterminate ? ((IndeterminateAdapter)mAdapter).getLeftMostIndex() : 0;
+			int hPerceived = h + (mCurrentAdapterIndex - fromOrigin - mCurrentBufferIndex) * getWidth();
 			
 			mIndicator.onScrolled(hPerceived, v, oldh, oldv);
 		}
@@ -539,8 +539,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 	
 	@Override
 	public View getSelectedView() {
-		return (mCurrentBufferIndex < mLoadedViews.size() ? mLoadedViews
-				.get(mCurrentBufferIndex) : null);
+		return (mCurrentBufferIndex < mLoadedViews.size() ? mLoadedViews.get(mCurrentBufferIndex) : null);
 	}
 
     @Override
@@ -564,32 +563,32 @@ public class ViewFlow extends AdapterView<Adapter> {
 		mScroller.forceFinished(true);
 		if (mAdapter == null)
 			return;
-		
-		position = Math.max(position, 0);
+
+        position = Math.max(position, 0);
         if(!indeterminate)
     		position =  Math.min(position, mAdapter.getCount()-1);
 
 		ArrayList<View> recycleViews = new ArrayList<View>();
 		View recycleView;
-		while (!mLoadedViews.isEmpty()) {
-			recycleViews.add(recycleView = mLoadedViews.remove());
+        while (!mLoadedViews.isEmpty()) {
+            recycleViews.add(recycleView = mLoadedViews.remove());
 			detachViewFromParent(recycleView);
 			mRecycledViews[((ViewFlow.LayoutParams)recycleView.getLayoutParams()).viewType].add(recycleView);
-		}
+        }
 
-		View currentView = makeAndAddView(position, true);//,
+        View currentView = makeAndAddView(position, true);//,
 //				(recycleViews.isEmpty() ? null : recycleViews.remove(0)));
-		mLoadedViews.addLast(currentView);
-		
-		for(int offset = 1; mSideBuffer - offset >= 0; offset++) {
-			int leftIndex = position - offset;
+        mLoadedViews.addLast(currentView);
+
+        for(int offset = 1; mSideBuffer - offset >= 0; offset++) {
+            int leftIndex = position - offset;
 			int rightIndex = position + offset;
             if(indeterminate)
             {
-                if(leftIndex > ((IndeterminateAdapter)mAdapter).getLeftMostIndex())
+                if(leftIndex >= ((IndeterminateAdapter)mAdapter).getLeftMostIndex())
                     mLoadedViews.addFirst(makeAndAddView(leftIndex, false));
 
-                if(rightIndex < ((IndeterminateAdapter)mAdapter).getRightMostIndex())
+                else if(rightIndex <= ((IndeterminateAdapter)mAdapter).getRightMostIndex())
                     mLoadedViews.addLast(makeAndAddView(rightIndex, true));
             }else{
                 if(leftIndex >= 0)
@@ -601,7 +600,7 @@ public class ViewFlow extends AdapterView<Adapter> {
             }
 		}
 
-		mCurrentBufferIndex = mLoadedViews.indexOf(currentView);
+        mCurrentBufferIndex = mLoadedViews.indexOf(currentView);
 		mCurrentAdapterIndex = position;
 		
 		mCurrentId = mAdapter.getItemId(mCurrentAdapterIndex);
@@ -611,9 +610,9 @@ public class ViewFlow extends AdapterView<Adapter> {
 //		for (View view : recycleViews) {
 //			removeDetachedView(view, false);
 //		}
-		pruneRecycledViews();
-		requestLayout();
-		setVisibleView(mCurrentBufferIndex, false);
+        pruneRecycledViews();
+        requestLayout();
+        setVisibleView(mCurrentBufferIndex, false);
 		if (mIndicator != null) {
 			mIndicator.onSwitched(mLoadedViews.get(mCurrentBufferIndex),
 					mCurrentAdapterIndex,0);
@@ -623,7 +622,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 					.onSwitched(mLoadedViews.get(mCurrentBufferIndex),
 							mCurrentAdapterIndex,0);
 		}
-	}
+    }
 
 	// For a full-screen (one item at a time) ViewFlow, we really only need
 	// one view of any given type in reserve... but looking forward to expandability,
@@ -654,14 +653,22 @@ public class ViewFlow extends AdapterView<Adapter> {
 		
 		removeAllViewsInLayout();
 
-		for (int i = Math.max(0, mCurrentAdapterIndex - mSideBuffer); i < Math
-				.min(mAdapter.getCount(), mCurrentAdapterIndex + mSideBuffer
-						+ 1); i++) {
-			mLoadedViews.addLast(makeAndAddView(i, true));//, null));
-			if (i == mCurrentAdapterIndex)
-				mCurrentBufferIndex = mLoadedViews.size() - 1;
-		}
-		
+        IndeterminateAdapter iAdapter = indeterminate ? (IndeterminateAdapter)mAdapter : null;
+        int leftEdge = indeterminate ? iAdapter.getLeftMostIndex() : 0;
+        int rightEdge = indeterminate ? iAdapter.getRightMostIndex() : mAdapter.getCount() - 1;
+//        int leftOffset = mCurrentAdapterIndex - leftEdge;
+//        int rightOffset =  rightEdge - mCurrentAdapterIndex;
+
+        for(int i=Math.max(leftEdge, mCurrentAdapterIndex - mSideBuffer);
+                i<Math.min(rightEdge, mCurrentAdapterIndex + mSideBuffer);
+                i++)
+        {
+            mLoadedViews.addLast(makeAndAddView(i, true));//, null));
+            if (i == mCurrentAdapterIndex)
+                mCurrentBufferIndex = mLoadedViews.size() - 1;
+        }
+
+
 //		setVisibleView(mCurrentBufferIndex,false);
 		
 		if(mIndicator != null){
@@ -676,7 +683,45 @@ public class ViewFlow extends AdapterView<Adapter> {
 		if (direction == 0)
 			return;
 
-		if (direction > 0) { // to the right
+        if(indeterminate)
+        {
+            IndeterminateAdapter iAdapter = (IndeterminateAdapter)mAdapter;
+
+            if(direction < 0) // to the left
+            {
+                mCurrentAdapterIndex--;
+                mCurrentBufferIndex--;
+                if((iAdapter.getRightMostIndex() - mCurrentAdapterIndex) > mSideBuffer)
+                {
+                    recycleView(mLoadedViews.removeLast());
+//                    mCurrentBufferIndex++;
+                }
+
+                int newAdapterIndex = mCurrentAdapterIndex - mSideBuffer;
+                if(newAdapterIndex >= iAdapter.getLeftMostIndex())
+                    mLoadedViews.addFirst(makeAndAddView(newAdapterIndex, false));
+                else{
+//                    mCurrentBufferIndex++;
+//                    mCurrentAdapterIndex++;
+                }
+            }else{ // to the right
+                mCurrentAdapterIndex++;
+                mCurrentBufferIndex++;
+                if((mCurrentAdapterIndex - iAdapter.getLeftMostIndex()) > mSideBuffer)
+                {
+                    recycleView(mLoadedViews.removeFirst());
+//                    mCurrentBufferIndex--;
+                }
+
+                int newAdapterIndex = mCurrentAdapterIndex + mSideBuffer;
+                if(newAdapterIndex <= iAdapter.getRightMostIndex())
+                    mLoadedViews.addLast(makeAndAddView(newAdapterIndex, true));
+                else{
+//                    mCurrentBufferIndex--;
+//                    mCurrentAdapterIndex--;
+                }
+            }
+        }else if (direction > 0) { // to the right
 			mCurrentAdapterIndex++;
 			mCurrentBufferIndex++;
 
@@ -691,8 +736,8 @@ public class ViewFlow extends AdapterView<Adapter> {
 
 			// Add new view to buffer
 			int newBufferIndex = mCurrentAdapterIndex + mSideBuffer;
-			if (newBufferIndex < mAdapter.getCount())
-				mLoadedViews.addLast(makeAndAddView(newBufferIndex, true));//,
+            if (newBufferIndex < mAdapter.getCount())
+                mLoadedViews.addLast(makeAndAddView(newBufferIndex, true));//,
 //						recycleView));
 
 		} else { // to the left
@@ -707,12 +752,11 @@ public class ViewFlow extends AdapterView<Adapter> {
 
 			// Add new view to buffer
 			int newBufferIndex = mCurrentAdapterIndex - mSideBuffer;
-			if (newBufferIndex > -1) {
-				mLoadedViews.addFirst(makeAndAddView(newBufferIndex, false));//,
+            if (newBufferIndex > -1) {
+                mLoadedViews.addFirst(makeAndAddView(newBufferIndex, false));//,
 //						recycleView));
-				mCurrentBufferIndex++;
-			}
-
+            }
+            mCurrentBufferIndex++;
 		}
 
 		mCurrentId = mAdapter.getItemId(mCurrentAdapterIndex);
@@ -721,11 +765,12 @@ public class ViewFlow extends AdapterView<Adapter> {
 		requestLayout();
 		setVisibleView(mCurrentBufferIndex, true);
 		if (mIndicator != null) {
+            Log.d("MALACHI", "mCurrentBufferIndex = " + mCurrentBufferIndex + ", but mLoadedViews.size()=" + mLoadedViews.size());
 			mIndicator.onSwitched(mLoadedViews.get(mCurrentBufferIndex),
 					mCurrentAdapterIndex,direction);
 		}
 		if (mViewSwitchListener != null) {
-			mViewSwitchListener
+            mViewSwitchListener
 					.onSwitched(mLoadedViews.get(mCurrentBufferIndex),
 							mCurrentAdapterIndex,direction);
 		}
@@ -789,7 +834,22 @@ public class ViewFlow extends AdapterView<Adapter> {
 		@Override
 		public void onChanged() {
             if(indeterminate)
+            {
+//                IndeterminateAdapter iAdapter = (IndeterminateAdapter)mAdapter;
+//                for(int index = iAdapter.getLeftMostIndex(); index <= iAdapter.getRightMostIndex(); index++)
+//                {
+//                    if(mCurrentId == mAdapter.getItemId(index))
+//                    {
+//                        mCurrentAdapterIndex = index;
+//                        setSelection(index);
+//                        break;
+//                    }
+//                }
+
+//                resetFocus();
+                setSelection(mCurrentAdapterIndex);
                 return;
+            }
 
 //			View v = getChildAt(mCurrentBufferIndex);
 //			if (v != null) {
