@@ -2,10 +2,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.goldenspiral.pom</groupId>
+        <artifactId>android</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
     <groupId>net.goldenspiral.android.libs</groupId>
     <artifactId>viewflow</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <packaging>apklib</packaging>
+    <version>1.0.1-SNAPSHOT</version>
+    <packaging>aar</packaging>
     <name>Android Viewflow</name>
 
     <properties>
@@ -26,125 +31,31 @@
         </repository>
     </repositories>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>nexus.goldenspiral.net</id>
-			<name>GoldenSpiral Public Repo</name>
-            <url>http://nexus.goldenspiral.net:8080/nexus/content/groups/public</url>
-		    <releases>
-		        <enabled>true</enabled>
-		    </releases>
-		    <snapshots>
-		        <enabled>true</enabled>
-		    </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
-
-    <distributionManagement>
-        <repository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>goldenspiral-releases</id>
-            <url>http://nexus.goldenspiral.net:8080/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <!-- I'd prefer false for uniqueVersion, but MVN3 no longer supports that https://cwiki.apache.org/MAVEN/maven-3x-compatibility-notes.html -->
-            <uniqueVersion>true</uniqueVersion>
-            <id>goldenspiral-snapshots</id>
-            <url>http://nexus.goldenspiral.net:8080/nexus/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
     
     <dependencies>
         <dependency>
             <groupId>android</groupId>
             <artifactId>android</artifactId>
-            <version>4.0.3_r1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>android.support</groupId>
             <artifactId>compatibility-v4</artifactId>
-            <version>r6</version>
         </dependency>
     </dependencies>
 
     <build>
 		    <plugins>
 		        <plugin>
-		            <groupId>org.apache.maven.plugins</groupId>
-		            <artifactId>maven-dependency-plugin</artifactId>
-		            <executions>
-		                <execution>
-		                    <id>copy-dependencies</id>
-		                    <goals>
-		                        <goal>copy-dependencies</goal>
-		                    </goals>
-		                    <phase>validate</phase>
-		                    <configuration>
-		                        <!--<includeScope>provided</includeScope>-->
-		                        <!--<includeScope>runtime</includeScope>-->
-		                    </configuration>
-		                </execution>
-		            </executions>
-		        </plugin>
-		        <plugin>
 		            <groupId>com.jayway.maven.plugins.android.generation2</groupId>
 		            <artifactId>android-maven-plugin</artifactId>
-		            <version>3.0.0</version>
-		            <configuration>
-		                <extractDuplicates>true</extractDuplicates>
-		                <androidManifestFile>${project.basedir}/src/AndroidManifest.xml</androidManifestFile>
-		                <!-- assetsDirectory>${project.basedir}/src/main/assets</assetsDirectory -->
-		                <resourceDirectory>${project.basedir}/src/main/android/res</resourceDirectory>
-		                <!--<resourceOverlayDirectory>${project.basedir}/src/main/android/overlay</resourceOverlayDirectory>-->
-		                <!-- nativeLibrariesDirectory>${project.basedir}/src/main/native</nativeLibrariesDirectory -->
-		                <sdk>
-		                    <platform>15</platform>
-		                </sdk>
-		                <deleteConflictingFiles>true</deleteConflictingFiles>
-				        <attachSources>true</attachSources>
-		                <attachJar>true</attachJar>
-		            </configuration>
-		            <extensions>true</extensions>
-		            <executions>
-		                <execution>
-		                    <id>alignApk</id>
-		                    <phase>install</phase>
-		                    <goals>
-		                        <goal>zipalign</goal>
-		                    </goals>
-		                </execution>
-		            </executions>
 		        </plugin>
-		        <plugin>
-		            <groupId>org.apache.maven.plugins</groupId>
-		            <artifactId>maven-jar-plugin</artifactId>
-		            <version>2.3.1</version>
-		        </plugin>
-		        <plugin>
-		            <groupId>org.apache.maven.plugins</groupId>
-		            <artifactId>maven-compiler-plugin</artifactId>
-		            <version>2.3.1</version>
+                <plugin>
+		            <groupId>net.mgorski.quicktag</groupId>
+		            <artifactId>quicktag</artifactId>
 		            <configuration>
-		                <source>1.6</source>
-		                <target>1.6</target>
+		                <vcs>git</vcs>
 		            </configuration>
 		        </plugin>
-		        <plugin>
-		            <groupId>org.apache.maven.plugins</groupId>
-		            <artifactId>maven-surefire-plugin</artifactId>
-		            <version>2.6</version>
-		        </plugin>
-		        <plugin>
-		            <groupId>org.apache.maven.plugins</groupId>
-		            <artifactId>maven-install-plugin</artifactId>
-		            <version>2.3.1</version>
-		        </plugin>	
-		        <plugin>
-		        	<groupId>org.apache.maven.plugins</groupId>
-		        	<artifactId>maven-deploy-plugin</artifactId>
-		        	<version>2.7</version>
-		        </plugin>	        
 	        </plugins>
     </build>
 </project>
